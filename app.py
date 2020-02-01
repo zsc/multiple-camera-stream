@@ -4,8 +4,8 @@ import cv2
 app = Flask(__name__)
 
 def find_camera(id):
-    cameras = ['rtsp://username:password@ip_address:554/user=username_password='password'_channel=channel_number_stream=0.sdp',
-    'rtsp://username:password@ip_address:554/user=username_password='password'_channel=channel_number_stream=0.sdp']
+    cameras = ['rtsp://192.168.10.15:554/user=admin&password=?channel=1&stream=0.sdp?',
+    'rtsp://192.168.10.123']
     return cameras[int(id)]
 #  for cctv camera use rtsp://username:password@ip_address:554/user=username_password='password'_channel=channel_number_stream=0.sdp' instead of camera
 #  for webcam use zero(0)

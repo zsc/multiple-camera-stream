@@ -17,9 +17,13 @@
 
         <div class="col-lg-7">
             <h3 class="mt-5">Multiple Live Streaming</h3>
+			<div id="leftThing" style="float: left; width:60%">
             <img src="{{ url_for('video_feed', id='0') }}" width="100%">
+			</div>
+			<div id="rightThing" style="float: right; width:40%">
+            <img src="{{ url_for('video_feed', id='1') }}" width="100%">
+			</div>
         </div>
-
 
     </div>
 </div>
