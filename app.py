@@ -19,7 +19,7 @@ def detect_face(face_detector, img, draw=False, skip_ir=True, ratio=3, use_dlib=
 
     if use_dlib:
         dets = face_detector(gray, 0)
-        faces = [(d.left(), d.top(), d.right() - d.left(), d.bottom() - d.top()) for d in dets]
+        faces = [(max(0, d.left()), d.top(), d.right() - max(0, d.left()), max(0, d.bottom()) - d.top()) for d in dets if d.right() - d.left() > 40 and d.bottom() - d.top() > 40]
     else:
         faces = face_detector.detectMultiScale(
             gray,
@@ -42,7 +42,10 @@ def detect_face(face_detector, img, draw=False, skip_ir=True, ratio=3, use_dlib=
             h *= ratio
             cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
             offset = img.shape[1] - 640
-            label = '{:.1f}'.format(img[y:y+h, x+offset:x+offset+w].mean(axis=2).flatten().max() / 255. * 40)
+            try:
+                label = '{:.1f}'.format(img[y:y+h, x+offset:x+offset+w].mean(axis=2).flatten().max() / 255. * 40)
+            except:
+                label = ''
             cv2.rectangle(img, (x + offset, y), (x+offset+w, y+h), (0, 255, 0), 2)
             cv2.putText(img, label, (x + offset, y + h), cv2.FONT_HERSHEY_COMPLEX, 1, (0,0,255), 1)
 
