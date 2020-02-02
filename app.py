@@ -11,9 +11,49 @@ def find_camera(id):
 #  for cctv camera use rtsp://username:password@ip_address:554/user=username_password='password'_channel=channel_number_stream=0.sdp' instead of camera
 #  for webcam use zero(0)
  
+def detect_face(face_detector, img, draw=False, skip_ir=True, ratio=3, use_dlib=False):
+    if skip_ir:
+        gray = cv2.resize(cv2.cvtColor(img[:,:-640], cv2.COLOR_BGR2GRAY), None, fx=1/ratio, fy=1/ratio)
+    else:
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    if use_dlib:
+        dets = face_detector(gray, 0)
+        faces = [(d.left(), d.top(), d.right() - d.left(), d.bottom() - d.top()) for d in dets]
+    else:
+        faces = face_detector.detectMultiScale(
+            gray,
+            scaleFactor=1.1,
+            minNeighbors=5,
+            minSize=(40, 40),
+            flags=cv2.CASCADE_SCALE_IMAGE
+        )
+
+    if False and len(faces) > 0:
+        cv2.imwrite('/tmp/t.png', img)
+        with open('/tmp/t.txt', 'w') as f:
+            for (x, y, w, h) in faces:
+                f.write('{},{},{},{}\n'.format(x, y, w, h))
+    if draw:
+        for (x, y, w, h) in faces:
+            x *= ratio
+            y *= ratio
+            w *= ratio
+            h *= ratio
+            cv2.rectangle(img, (x, y), (x+w, y+h), (0, 255, 0), 2)
+            offset = img.shape[1] - 640
+            label = '{:.1f}'.format(img[y:y+h, x+offset:x+offset+w].mean(axis=2).flatten().max() / 255. * 40)
+            cv2.rectangle(img, (x + offset, y), (x+offset+w, y+h), (0, 255, 0), 2)
+            cv2.putText(img, label, (x + offset, y + h), cv2.FONT_HERSHEY_COMPLEX, 1, (0,0,255), 1)
 
 def gen_frames():
-     
+    use_dlib = True
+    if use_dlib:
+        import dlib
+        face_detector = dlib.get_frontal_face_detector()
+    else:
+        cascPath = "haarcascade_frontalface_default.xml"
+        face_detector = cv2.CascadeClassifier(cascPath) 
     cam = find_camera(0)
     cap = cv2.VideoCapture(cam)
     cam2 = find_camera(1)
@@ -34,7 +74,14 @@ def gen_frames():
             if len(buf) > num_frame:
                 buf = buf[-num_frame:]
                 frame2 = buf[0]
+
+                #cv2.imwrite('/tmp/frame.jpg', frame)
+                #cv2.imwrite('/tmp/frame2.jpg', frame2)
+                frame = frame[:,90:1180]
+                frame2 = frame2[20:470]
                 img = np.concatenate([cv2.resize(frame, (int(frame2.shape[0] / frame.shape[0] * frame.shape[1]), frame2.shape[0])), frame2], axis=1)
+                if True:
+                    detect_face(face_detector, img, draw=True, use_dlib=use_dlib, ratio=2 if use_dlib else 3)
                 ret, buffer = cv2.imencode('.jpg', img)
                 frame = buffer.tobytes()
                 yield (b'--frame\r\n'
